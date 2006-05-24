@@ -17,9 +17,7 @@ portability
 
 wishlist
 ========
-  - replace linked list with hash; performance tanks as more IPs to scan
   - replace slow libnet with raw socket calls (more portable?)
-
 
 
 Notes:
