@@ -1,0 +1,10 @@
+MAC address formats accepted and produced
+=========================================
+
+There are several different common formats for reporting and
+providing MAC addresses.  Here are the most common ones:
+
+       00:80:c8:fb:78:d8   Unix, Linux, BSD, Mac
+       00-80-c8-fb-78-d8   Windows (?), 3Com
+       0080.c8fb.78d8      Cisco
+

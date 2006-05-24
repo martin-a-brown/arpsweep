@@ -1,0 +1,361 @@
+.\"
+.\" $Id:$
+.\"
+.TH arpsweep "8" "April 2006" "arpsweep 0.45" "User Commands"
+.SH NAME
+arpsweep \- send ARP requests to one or more Ethernet neighbors
+.SH SYNOPSIS
+.IX Header "SYNOPSIS"
+arpsweep
+  [ \fB\-h\fR           | \fB\-\-help\fR     | \fB\-\-usage\fR          ]
+  [ \fB\-q\fR           | \fB\-\-quiet\fR                       ]
+  [ \fB\-V\fR           | \fB\-\-version\fR                     ]
+  [ \fB\-v\fR           | \fB\-\-verbose\fR[\fB=\fR\fILEVEL\fR]             ]
+  [ \fB\-A\fR           | \fB\-\-alive\fR                       ]
+  [ \fB\-M\fR           | \fB\-\-missing\fR                     ]
+  [ \fB\-W\fR           | \fB\-\-weird\fR                       ]
+  [ \fB\-N\fR           | \fB\-\-no-header\fR                   ]
+  [ \fB\-i\fR \fIINTERFACE\fR | \fB\-\-interface=\fR\fIINTERFACE\fR         ]
+  [ \fB\-c\fR \fINUM\fR       | \fB\-\-count=\fR\fINUM\fR                   ]
+  [ \fB\-p\fR \fINUM\fR       | \fB\-\-pending=\fR\fINUM\fR                 ]
+  [ \fB\-w\fR \fIMSEC\fR      | \fB\-\-wait=\fR\fIMSEC\fR                   ]
+  [ \fB\-m\fR \fIMACFORMAT\fR | \fB\-\-mac-format=\fR\fIMACFORMAT\fR        ]
+  [ \fB\-f\fR \fIFORMAT_STR\fR| \fB\-\-format=\fR\fIFORMAT_STR\fR           ]
+  \fIIPADDR\fR[\fI,MAC\fR] [ \fIIPADDR\fR[\fI,MAC\fR] ... ]
+.SH DESCRIPTION
+.B arpsweep
+uses the Address Resolution Protocol to identify hosts alive and missing on
+the local Ethernet.  Additionally, it will report on IP address conflicts,
+usually obvious when receiving multiple ARP replies for a single IP address.
+(For the impatient, jump to EXAMPLES.)
+.SH OPTIONS
+.PP
+.\" -i, --interface=NAME
+.\"
+.TP
+\fB\-i\fR, \fB\-\-interface\fR=\fIINTERFACE\fR
+Specify the Ethernet interface on which to send/receive ARP requests for this
+invocation.  This should be the interface name as reported by the
+.B ifconfig
+or
+.B ip
+utilities, e.g. eth0, eth1 or eth2.7
+.\" -h, --help, --usage
+.\"
+.TP
+\fB\-h\fR, \fB\-\-help\fR, \fB\-\-usage\fR
+Print out a useful short help screen.
+.\" -q, --quiet
+.\"
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Suppress as much output as possible.  Fatal warnings will still be issued
+to STDERR and the final report will be printed to STDOUT.
+.\" -v, --verbose[=LEVEL]
+.\"
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR[=\fILEVEL\fR]
+Verbosity can be controlled in a number of ways.
+By using --verbose with no argument, the
+verbosity level is increased including all "lower" verbosity levels.  If you
+wish to specify only information or warning information, specify
+--verbose=WARN.  Valid LEVELs in descending order of diagnostic information
+are:  DEBUG, INFO, WARN, and ERR.  Only the first character of the argument is
+required (e.g., --verbose=W, --verbose=w and --verbose=WARN all specify the
+same level of verbosity).  Default verbosity level is ERR, so throwing more
+than three unqualified verbosity flags will yield no more diagnostic output.
+.\" -c, --count=NUM
+.\"
+.TP
+\fB\-c\fR, \fB\-\-count\fR=\fINUM\fR
+Send a total of
+.I NUM
+ARP requests to each target host.  Specify zero (0) to continue until
+bored.
+.\" -r, --requests=NUM
+.\"
+.TP
+\fB\-p\fR, \fB\-\-pending\fR=\fINUM\fR
+Allow no more than
+.I NUM
+ARP requests to be in flight on the network at any moment.
+.\" -w, --wait=MSEC
+.\"
+.TP
+\fB\-w\fR, \fB\-\-wait\fR=\fIMILLISECONDS\fR
+Allow a minimum of
+.I MILLISECONDS
+before assuming the remote host is not responding to an ARP request.  The
+default is one quarter of a second (250 milliseconds), a very long time on
+most Ethernets.  If you have a long-haul, bridged or wireless network, you may
+need to increase this value to allow for the longer round trip.  Note, also,
+that if you set this value very low, a second ARP could be transmitted before
+the remote host has time to respond to the first one.  This could conceivably
+produce skewed statistics with negative round trip times.
+.\" -m, --mac-format=STR
+.\"
+.TP
+\fB\-m\fR, \fB\-\-mac\-format\fR=\fISTR\fR
+There are three common MAC address formats (see TARGET SPECIFICATION).  Each
+of these formats can be produced by
+.B arpsweep.
+Valid arguments to mac-format include:  
+\fIUNIX\fR,
+\fILinux\fR,
+\fIMacintosh\fR,
+\fIWindows\fR,
+\fI3Com\fR,
+\fICisco\fR.  Only the first character of the mac-format name is required (case
+insensitive).  If the argument is not understood, it will be silently ignored 
+and the default (Linux) format will be chosen.
+.\" -f, --format=STR
+.\"
+.TP
+\fB\-f\fR, \fB\-\-format\fR=\fIARPSWEEP_FORMAT_STRING\fR
+Override default output format with a custom format string.  See OUTPUT
+FORMATTING below.  Unimplemented as yet.  The option will be silently ignored.
+.\" -B, --broadcast-only, --no-unicast
+.\"
+.TP
+\fB\-B\fR, \fB\-\-broadcast-only\fR, \fB\-\-no-unicast\fR
+Send only broadcast Ethernet frames (see METHODOLOGY AND INTERNALS below).
+This option is useful for catching duplicate IPs or poorly behaved layer 3
+devices.  The presence of this option will override any user-specified MAC
+addresses.
+.\" -N, --no-header
+.\"
+.TP
+\fB\-N\fR, \fB\-\-no-header\fR
+Do not print the header line in the report (just the data).
+.\" -A, --alive
+.\"
+.TP
+\fB\-A\fR, \fB\-\-alive\fR
+Only produce output report on IPs which have replied to our ARP requests.
+.\" -M, --missing
+.\"
+.TP
+\fB\-M\fR, \fB\-\-missing\fR
+Only produce output report on IPs which have failed to reply.
+.\" -W, --weird
+.\"
+.TP
+\fB\-W\fR, \fB\-\-weird\fR
+Only produce output report on IPs with various ARP problems, e.g. more than
+one responding MAC address; mismatched frame header address and link layer
+address specified in ARP reply; mangled ARP reply.
+.\" -V, --version
+.\"
+.TP
+\fB\-V\fR, \fB\-\-version\fR
+Output a short listing identifying version information.
+.SH TARGET SPECIFICATION
+For
+.B arpsweep,
+a target is any valid IP address and an optional MAC address.
+Targets will be read as (an arbitrary number of) arguments on the command
+line.  Targets can also be supplied on STDIN via a file or pipe.  The
+expected target format differs slightly.
+.SS Accepted IP address formats
+.PP
+There is only one common format used for IP addresses, the ubiquitous decimal
+dotted quad syntax.
+.B arpsweep
+only understands this common syntax.
+.PP
+.RS
+x.x.x.x
+   Dotted quad (e.g. 192.168.1.42)
+.RE
+.SS Accepted MAC address formats
+.PP
+Although the numbers are always in hexadecimal, MAC addresses are written in
+several different common formats.  MAC address formats understood and accepted
+by 
+.B arpsweep
+are:
+.PP
+.RS
+xx:xx:xx:xx:xx:xx
+   Linux, BSD, Mac (e.g. 00:80:c8:fb:78:d8)
+.RE
+.PP
+.RS 
+xx-xx-xx-xx-xx-xx
+   Windows, 3Com (e.g. 00-80-c8-fb-78-d8)
+.RE
+.PP
+.RS
+xxxx.xxxx.xxxx
+   Cisco style (e.g. 0080.c8fb.78d8)
+.RE
+.PP
+.SS Command line target specification
+Any target specified on the command line is comprised of at least a valid IP
+address and optionally, a comma (no space) followed by a valid MAC address
+specification. 
+.PP
+.RS
+IPADDR[,MACADDR]
+.RE
+.PP
+.SS Valid command line target specifications
+Valid examples listed below:
+.PP
+.RS
+192.168.1.42
+.RE
+.RS
+192.168.1.42,00:80:c8:fb:78:d8
+.RE
+.RS
+192.168.1.42,00-80-c8-fb-78-d8
+.RE
+.RS
+192.168.1.42,0080.c8fb.78d8
+.RE
+.PP
+.SS STDIN target specification
+Any target specified to STDIN of 
+.B arpsweep
+is comprised of at least a valid IP address and optionally, whitespace
+followed by a valid MAC address specification.  Surrounding whitespace is
+ignored.
+.PP
+.RS
+IPADDR[ MACADDR]
+.RE
+.PP
+.SS Valid target specifications for STDIN
+When 
+.B arpsweep
+reads target specifications from STDIN, it accepts one target per line with
+whitespace separating a valid IP address from an optional MAC address.
+.PP
+.RS
+192.168.1.42
+.RE
+.RS
+192.168.1.42 00:80:c8:fb:78:d8
+.RE
+.RS
+192.168.1.42 00-80-c8-fb-78-d8
+.RE
+.RS
+192.168.1.42 0080.c8fb.78d8
+.RE
+.PP
+.SH OUTPUT FORMATTING
+Unimplemented.
+.SH METHODOLOGY AND INTERNALS
+.SS Overview
+.PP 
+The
+.B arpsweep
+utility uses the libnet packet creation and the pcap network capture libraries
+to transmit and receive multiple ARP replies.
+.SS Address processing (arguments/STDIN)
+.PP
+After option processing and validation, 
+.B arpsweep
+parses any command line arguments as targets (see TARGET SPECIFICATION).  If
+no command line arguments remain, then whitespace separated IP and optional
+MAC address pairs are read from from each line of a non-tty STDIN.
+.B arpsweep
+allocates memory for each entry stores each IP and MAC (inserting the
+Ethernet broadcast MAC if no MAC address was specified).  If 
+.B arpsweep
+encounters any error in parsing an IP or a MAC address, it will remove the
+address from the list of targets.  Address parsing errors will be reported
+to the user (unless -q has been thrown).  If after reading to the end of
+STDIN
+.B arpsweep
+received no valid address specifications, it politely quits, providing a
+usage string and complaining of no target IP addresses.
+.SS Initializing PCAP
+.PP
+The BPF installed on the interface should prevent the packet capture from
+returning anything other than ARP replies bound for the MAC address on the
+interface in question.
+.SS Scanning
+.PP
+After sending several ARP requests (up to the number specified by the
+--pending) option, 
+.B arpsweep
+will alternate between select() and usleep(), recording the delay between the
+ARP request and any received ARP replies.  If the user did not supply a target
+MAC address for one of the IPs, 
+.B arpsweep
+will use the link layer broadcast address (ff:ff:ff:ff:ff:ff) until it
+receives a response.  Unless the --broadcast-only option is thrown it will
+switch to the unicast address for any subsequent ARP requests.
+.SS Reporting
+.PP
+Reporting is provided in an ASCII tabular output format.  The output will
+include the IP address of the target host, the link layer address (MAC), the
+number of ARP requests sent and received, the cumulative delay and a
+calculation of the average delay.  (Maybe more statistics fields in the
+future.)
+.SH EXAMPLES
+Find out if the single host 192.168.1.42 is alive on eth0:
+.PP
+.RS
+.B "arpsweep 192.168.1.42"
+.RE
+.PP
+See if 192.168.1.42 is alive at MAC 00:80:c8:fb:78:d8 on VLAN 7 on device
+eth1:
+.PP
+.RS
+.B "arpsweep \-i eth1.7 192.168.1.42,00:80:c8:fb:78:d8"
+.RE
+.PP
+Send 10 ARP requests in broadcast Ethernet frames to see if 192.168.1.42
+is alive on interface eth1.  Only report if host does not respond:
+.PP
+.RS
+.B "echo 192.168.1.42 00:80:c8:fb:78:d8 | arpsweep \-MBc 10 \-i eth1"
+.RE
+.PP
+.SH BUGS
+.PP
+Please report bugs to the author (see AUTHOR).
+.PP
+Since ARP is a stateless protocol, there's no way to determine if a captured
+ARP reply is in response to the network stack or this ARP scanning
+application.  Take the timings with a grain of salt.
+.PP
+This program requires root privileges (FIXME: presumably CAP_NET_RAWIO and
+CAP_NET_ADMIN?) to run.
+.PP
+.SH TODO
+.PP
+It would be convenient for the user to be able to specify a 'wait' time in
+something other than milliseconds.
+.SH REFERENCES
+.PP
+.SS libnet, http://www.packetfactory.net/libnet/
+The libnet packet creation library provides an abstracted interface to raw
+packet and frame creation.
+.SS pcap, http://www.tcpdump.org/
+The pcap library provides an abstracted
+.SS An Ethernet Address Resolution Protocol, http://www.ietf.org/rfc/rfc826.txt
+RFC 826 defines the standard for ARP.
+.SS Network Sorcery, http://www.networksorcery.com/enp/protocol/arp.htm
+The RFC cookbook made available by Network Sorcery provides a clear picture of
+many network and data link protocols.
+.SH SEE ALSO
+.B ip neighbor
+(8) Linux only,
+.B arp
+(8),
+.B arp
+(7).
+
+.SH AUTHOR
+Written by Martin A. Brown, martin@linux-ip.net.
+.SH COPYRIGHT
+Copyright \(co 2006 Martin A. Brown, martin@linux-ip.net
+
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.

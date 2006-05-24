@@ -1,0 +1,8 @@
+arpsweep INSTALL
+================
+
+./configure  && make
+
+
+(More will be included here later.  Things like, Oh, you need libnet and
+libpcap.)

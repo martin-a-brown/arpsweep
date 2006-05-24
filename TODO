@@ -1,0 +1,73 @@
+arpsweep TODO:
+--------------
+
+featuritis
+==========
+  - adaptive RTT (a la "ping -A")
+  - implement the ignored format specification
+  - stop after first reply
+  - allow specification of request or reply (gratuitous ARP, scary!)
+
+
+portability
+===========
+  - compile time BPF selection ("arp and ether dst <ether>" or "arp")
+  - OpenBSD, MacOSX portability issues
+
+
+wishlist
+========
+  - replace linked list with hash; performance tanks as more IPs to scan
+  - replace slow libnet with raw socket calls (more portable?)
+
+
+
+Notes:
+
+Evidence of performance implications of linked list use/traversal shows up in
+the recorded delay times).  Somehow, I really do not think that the
+cause of the increased latency!
+
+  - 1 target
+
+    # ./arpsweep 10.10.20.1 -c 100
+    IP Address             Link Layer   Recv   Sent    Delay(us)  Average
+    10.10.20.1      00:80:c8:fb:78:d8    100    100         9361       93
+
+  - around ( 2 ** 8 ) targets
+
+    # ./arpsweep 10.10.20.1 -c 100 $( printf "19 2.168.0.%s " $( seq 1 254 ) )
+    IP Address             Link Layer   Recv   Sent    Delay(us)  Average
+    10.10.20.1      00:80:c8:fb:78:d8    100    100        14453      144
+    192.168.0.1     00:80:c8:fb:78:d8    100    100        13046      130
+    192.168.0.4     ff:ff:ff:ff:ff:ff      0    100            0        0
+      [ ... ]
+
+  - around ( 2 ** 10 ) targets
+    
+    # ./arpsweep 10.10.20.1 -c 100 $( for a in $( seq 0 3 ) ; do \
+    >                    printf "192.168.$a.%s " $( seq 1 254 ) ; done 
+    10.10.20.1      00:80:c8:fb:78:d8      6      6         1189      198
+    192.168.0.1     00:80:c8:fb:78:d8      6      6         1285      214
+      [ ... ]
+
+  - around ( 2 ** 14 ) targets
+
+    # {  for a in $( seq 0 63 ) ; do \
+    > printf "192.168.$a.%s\n" $( seq 1 254 ) ; done ; } | ./arpsweep -c 100
+    IP Address             Link Layer   Recv   Sent    Delay(us)  Average
+    10.10.20.1      00:80:c8:fb:78:d8      3      3        63370    21123
+    192.168.0.1     00:80:c8:fb:78:d8      3      3        60620    20206
+      [ ... ]
+
+Amusingly, the linked list management is one of the big elements of overhead
+in the utility.  When I do not check to see if a user has specified duplicate
+IPs, the initialization time drops dramatically.
+   
+mabrown@virgule:~/work/arpsweep/main> wc -l ../iplist.txt 
+16640 ../iplist.txt
+mabrown@virgule:~/work/arpsweep/main> { head -1 \@400000004456d09a2944b474.s |
+tai64nlocal  ; tail -1 current | tai64nlocal ; } | awk '{print $1, $2 }'
+2006-05-01 22:22:56.592140500
+2006-05-01 22:27:29.339862500
+

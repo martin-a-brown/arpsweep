@@ -1,0 +1,7 @@
+arpsweep BUGS
+=============
+
+See also TODO.
+
+  - Occasionally, "Floating point exception", when SIGINT sent.
+

@@ -1,0 +1,31 @@
+arpsweep README
+===============
+The arpsweep utility is a reimplementation of arping which supports multiple
+targets in a single command-line invocation.  It can also be used as an ARP
+network scanner.
+
+
+arpsweep Q&A
+============
+
+Q: What is ARP?
+A: Address Resolution Protocol.  Are you sure you are in the right place?
+
+Q: What does an ARP request and reply look like.
+A: Included in this distribution are a sample pcap file (arp-example.pcap
+   and a shell script which prints out that very same data.  This will
+   show an ARP request and an ARP reply.  See also README.arpframes.
+
+Q: Why do I need this utility?
+A: If you are asking this question, you probably don't.
+
+Q: How do I install the program?
+A: Like most other software, for details see INSTALL.
+
+Q: What's an example of how to run the program?
+A: arpsweep -i eth0 10.10.20.2 10.10.20.1 10.10.20.7
+
+Q: How else can I run it?
+A: See the manpage.  (If arpsweep is not yet installed, you should be
+   able to view the manpage by running this command: "man ./arpsweep.8".)
+

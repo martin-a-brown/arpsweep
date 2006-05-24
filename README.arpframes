@@ -1,0 +1,84 @@
+
+
+Let's look at the some raw data, shall we?
+
+diagram of a broadcast ARP request
+----------------------------------
+This is a typical ARP request, transmitted by a Linux-2.6.8 machine.
+Requests (including frame header) are 42 bytes.
+
+00:30:1b:af:78:51 > ff:ff:ff:ff:ff:ff, ARP, length 42: arp who-has 10.10.20.2 tell 10.10.20.44
+        0x0000:  ffff ffff ffff 0030 1baf 7851 0806 0001  .......0..xQ....
+        0x0010:  0800 0604 0001 0030 1baf 7851 0a0a 142c  .......0..xQ...,
+        0x0020:  0000 0000 0000 0a0a 1402                 ..........
+
+
+The above frame/packet dump is dissected below:
+
+Ethernet frame:
+
+dest MAC (broadcast)        0x0000:  ffff ffff ffff
+source MAC                                          0030 1baf 7851
+ETHERTYPE_ARP (0x0806)                                             0806
+
+
+ARP packet:
+
+ARPHRD_ETHER (0x01)                                                     0001
+ETHERTYPE_IP (0x0800)       0x0010:  0800                                   
+Link layer addr length                    06
+Logical layer addr length                   04
+ARPOP_REQUEST (0x01)                           0001
+source link layer                                   0030 1baf 7851
+source IP address (10.10.20.44)                                    0a0a 142c
+dest link layer (unset)     0x0020:  0000 0000 0000 
+dest IP address (10.10.20.2)                        0a0a 1402
+
+
+There are a few interesting things here.  First, note that in the frame
+header (check hex output), the broadcast address appears first in order
+that hardware switching equipment doesn't have to read very far into the
+frame in order to figure out where the frame is bound.
+
+It's clear that the broadcast address is a six-byte string of all ones,
+(ff:ff:ff:ff:ff:ff).  The source address (00:30:1b:af:78:51) on the
+frame are the next six bytes, which should match the bytes in the
+contained ARP request.
+
+
+diagram of an ARP reply
+-----------------------
+
+This is an ARP response formatted by tcpdump with ASCII interpretation,
+link layer output and the entire frame in hexadecimal with hexadecimal
+offsets (note, replies are almost always 60 bytes!):
+
+00:60:b0:15:30:2d > 00:30:1b:af:78:51, ARP, length 60: arp reply 10.10.20.2 is-at 00:60:b0:15:30:2d
+        0x0000:  0030 1baf 7851 0060 b015 302d 0806 0001  .0..xQ.`..0-....
+        0x0010:  0800 0604 0002 0060 b015 302d 0a0a 1402  .......`..0-....
+        0x0020:  0030 1baf 7851 0a0a 142c 0000 0000 0000  .0..xQ...,......
+        0x0030:  0000 0000 0000 0000 0000 0000            ............
+
+
+
+References and tips
+-------------------
+Man pages and other on-box documentation sources (On most of my machines,
+$INCLUDE=/usr/include):
+
+  $ man libnet-headers
+  $ less $INCLUDE/libnet/libnet-headers.h
+  $ less $INCLUDE/linux/if_arp.h
+
+Diagram of an ARP packet in HTML:
+
+  http://www.networksorcery.com/enp/protocol/arp.htm
+
+RFC for ARP:
+
+  http://www.networksorcery.com/enp/rfc/rfc826.txt
+
+Command to format tcpdump output as above:
+  
+  # tcpdump -eqts0 -xx -nn -r $PCAP_FILE
+

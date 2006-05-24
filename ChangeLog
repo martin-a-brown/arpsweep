@@ -1,0 +1,68 @@
+
+2006-05-17 0.46   Martin A. Brown <martin@linux-ip.net>
+
+  * implemented -M, -A and -W command line switches for output
+    reporting
+  * internal release
+
+2006-05-01 0.45   Martin A. Brown <martin@linux-ip.net>
+
+  * switched to using doubly linked lists; very convenient,
+    but performance stinks > 1000 IPs (see TODO)
+  * accept IP addrs on STDIN
+  * accept MAC addrs on command line or STDIN (per manpage)
+  * moved linked list code to file list.c
+  * added README and very basic INSTALL
+
+2006-04-30 0.44   Martin A. Brown <martin@linux-ip.net>
+
+  * allow user to select output format for MAC address
+  * accept multiple input formats for MAC address
+  * pass format as an option to ln_ether_ntoa
+  * better o.wait / o.waittv math
+
+2006-04-30 0.43   Martin A. Brown <martin@linux-ip.net>
+
+  * stopped believing h->ts in pcap_handler, I'm in good company.
+    sadly, time calculations will probably be a bit off, then
+  * switched to snprintf, changed prototype for ln_ether_ntoa
+  * Alpha release of code; configure script badly borked
+  * PCAP (or BPF) doesn't work on OpenBSD+Darwin (see TODO)
+  * added THANKS file (and even some thanks)
+
+2006-04-29 0.42   Martin A. Brown <martin@linux-ip.net>
+
+  * moved logging functions to separate log.c file
+  * added timeval calculations functions in timevalmath.h
+  * able to calculate round-trip times!
+  * separated all #defines to defines.h
+  * added select() functionality, error reporting for select()
+  * tried singly linked lists for data storage (arp_record struct)
+  * linked list debugging added
+  * moved option validation to separate function
+
+2006-04-25 0.41   Martin A. Brown <martin@linux-ip.net>
+
+  * added more sophisticated logging, verbosity and debugging system
+  * toyed with linked lists (with only one member, huh?)
+  * added function for transmitting ARP frames
+  * moved pcap initialization to own function
+  * able to send a query and catch/display the reply (proof!)
+
+2006-04-22 0.4    Martin A. Brown <martin@linux-ip.net>
+
+  * added manpage, arpsweep.8
+
+2006-04-21 0.3    Martin A. Brown <martin@linux-ip.net>
+
+  * moved libnet initialization to own function
+
+2006-04-21 0.2    Martin A. Brown <martin@linux-ip.net>
+
+  * added command line processing, usage functions
+  * added arp_record struct
+
+2006-04-18 0.1    Martin A. Brown <martin@linux-ip.net>
+
+  * initial write, just opens PCAP and libnet and sniffs packets
+  * signal handler (SIGINT, SIGALRM)

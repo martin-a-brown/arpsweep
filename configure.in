@@ -1,0 +1,63 @@
+# Process this file with autoconf to produce a configure script.
+AC_INIT([arpsweep], [0.46], [martin@linux-ip.net])
+AC_CONFIG_SRCDIR([arpsweep.c])
+
+AM_INIT_AUTOMAKE
+AM_CONFIG_HEADER([config.h])
+
+# Checks for programs.
+AC_PROG_CC
+
+# Checks for libraries.
+
+# Checks for header files.
+AC_HEADER_STDC
+AC_HEADER_STDBOOL
+AC_CHECK_HEADERS([limits.h stdlib.h string.h unistd.h pcap-bpf.h pcap.h])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_SIZE_T
+
+# Checks for library functions.
+# AC_CHECK_FUNCS([strtol])
+
+dnl
+dnl First find some usable PCAP headers.
+dnl
+
+AC_ARG_WITH(libnet_includes,
+    [  --with-libnet-includes=DIR    libnet include directory],
+    [with_libnet_includes="$withval"],[with_libnet_includes=no])
+
+if test "$with_libnet_includes" != "no"; then
+    CFLAGS="${CFLAGS} -I${with_libnet_includes}"
+fi
+
+AC_CHECK_HEADERS(libnet.h,, LIBNET="no")
+if test "$LIBNET" = "no"; then
+    echo ""
+    echo "Error: Can't find libnet 1.1.0 or greater. Visit http://www.packetfact
+ory.net/libnet for the latest version."
+    exit;
+fi  
+
+AC_ARG_WITH(libpcap_includes,
+     [  --with-libpcap-includes=DIR   libcap include directory],
+     [with_libpcap_includes="$withval"],[with_libpcap_includes=no])
+
+if test "$with_libpcap_includes" != "no"; then
+    CFLAGS="${CFLAGS} -I${with_libpcap_includes}"
+fi
+
+AC_CHECK_HEADERS(pcap.h,, LIBPCAP="no")
+if test "$LIBPCAP" = "no"; then
+    echo ""
+    echo "Error: Can't find Libpcap. Visit http://www.tcpdump.org for the latest
+ version."
+    exit;
+fi
+
+
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT()

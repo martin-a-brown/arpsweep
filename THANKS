@@ -1,0 +1,40 @@
+
+The arpsweep utility was conceived to solve a problem Dale Carder had in a
+wireless captive portal network [0].  I would never have started to create
+this utility without having heard of his problem.  Without firing off dozens
+of arping children and capturing their exit codes, how can you discover if
+hosts are still alive on the network?
+
+I have used many open source projects as models for the software and have
+taken suggestions from many people.  Here is a list of people and projects to
+whom this utility owes its existence.
+
+People:
+=======
+
+Jon Nelson:         C mentoring
+                    code suggestions
+Marcin Antkiewicz:  usability testing and suggestions
+                    documentation review
+Mark Tinberg:       portability beta testing
+Matt Radtke:        portability beta testing
+                    documentation review
+Dale Carder:        inspiration, initial problem
+Jason Krantz:       beta testing
+
+
+Projects:
+=========
+
+  - arping (specifically, arping-2) by Thomas Habets
+      http://www.habets.pp.se/synscan/programs.php?prog=arping
+  - arpscan-0.8, by Jan Bobrowski
+      http://wizard.ae.krakow.pl/~jb/arpscan/
+  - libnet
+      http://www.packetfactory.net/libnet/  
+  - libpcap
+      http://www.tcpdump.org/
+
+-Martin A. Brown, 2006-04-29
+
+ [0] http://net.doit.wisc.edu/~dwcarder/captivator-gw/
