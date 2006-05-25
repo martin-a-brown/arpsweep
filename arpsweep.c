@@ -83,8 +83,6 @@ struct a_options    o                           = {
                     .ptr_macf                   = NULL,
                     .format                     = DEFAULT_OUTPUT_FORMAT,
                     .wait                       = DEFAULT_PATIENCE,
-                    .waittv.sec                 = 0,
-                    .waittv.usec                = 0,
                     .verbose                    = LOG_LEVEL_ERR,
                     .flags                      = 0,
                     .outp                       = NULL
@@ -164,12 +162,12 @@ einval:
 
 static bool get_mac_addr(const char *in, u_int8_t *n)
 {
-         if ( 6 == sscanf(in, "%x:%x:%x:%x:%x:%x", ( unsigned int ) n++,
-                                                   ( unsigned int ) n++,
-                                                   ( unsigned int ) n++,
-                                                   ( unsigned int ) n++,
-                                                   ( unsigned int ) n++,
-                                                   ( unsigned int ) n++ ) )
+         if ( 6 == sscanf(in, "%x:%x:%x:%x:%x:%x", ( unsigned int * ) n+0,
+                                                   ( unsigned int * ) n+1,
+                                                   ( unsigned int * ) n+2,
+                                                   ( unsigned int * ) n+4,
+                                                   ( unsigned int * ) n+4,
+                                                   ( unsigned int * ) n+5 ) )
   { return true;
 //} else if ( 6 == sscanf(in, "%2x%x.%2x%x.%2x%x", n0, n1, n2, n3, n4, n5 ) )
 //{ return true;
@@ -229,7 +227,7 @@ remove_from_inflight( struct arp_record * cur )
 {
   list_remove( &inflight, cur );
 
-  if ( o.count && cur->numsent >= o.count )
+  if ( o.count && cur->numsent >= o.count || o.flags & AO_FIRST_REPLY )
   {
      list_append( &complete, cur );
   } else {
@@ -274,11 +272,11 @@ expire_inflight( struct arp_record * cur )
     switch ( d )
     {
       case  0: /* fall through, weird, exact time? */
-      case  1: WARN( "No response from %s for ARP number %d at %d.%d, expiring.\n",
+      case  1: WARN( "No response from %s for ARP number %ld at %d.%d, expiring.\n",
                      inet_ntoa( cur->ip ),
                      cur->numsent,
-                     now.tv_sec,
-                     now.tv_usec
+                     (unsigned int)now.tv_sec,
+                     (unsigned int)now.tv_usec
                     );
 
                remove_from_inflight( cur );
@@ -287,10 +285,10 @@ expire_inflight( struct arp_record * cur )
 
       case -1: DEBUG("Not expiring inflight %s at %d.%d (sent_time %d.%d).\n",
                      inet_ntoa( cur->ip ),
-                     ( &cur->sent_time )->tv_sec,
-                     ( &cur->sent_time )->tv_usec,
-                     now.tv_sec,
-                     now.tv_usec
+                     (unsigned int)( &cur->sent_time )->tv_sec,
+                     (unsigned int)( &cur->sent_time )->tv_usec,
+                     (unsigned int)now.tv_sec,
+                     (unsigned int)now.tv_usec
                     );
                break;
 
@@ -312,7 +310,6 @@ expire_inflight( struct arp_record * cur )
 struct arp_record *
 parse_target( char * ip, char * mac )
 {
-  struct timeval           t;
   struct arp_record       *new;
   struct in_addr           tg_ip;
   bool                     ok = true;
@@ -357,7 +354,7 @@ parse_target( char * ip, char * mac )
     memset( &new->lladdr, 0xff, ETHER_ADDR_LEN );
   } else {
     u_int8_t n[6];
-    if ( ! get_mac_addr( mac, &n ) )
+    if ( ! get_mac_addr( mac, n ) )
     {
       ok = false;
       ERR( "Unrecognized MAC address %s, skipping IP %s.\n", mac, ip );
@@ -427,8 +424,6 @@ command_line_target( char * udata )
   char                             *uip;
   char                             *umac;
   struct arp_record                *new = NULL;
-  char                              buf0[128];
-  char                              buf1[128];
   int                               i;
 
   uip = udata;
@@ -610,10 +605,10 @@ caught_arp_reply(const char            *unused,
   DEBUG( "IP %s responded in %d us; sent_time: %d.%d, pkttime: %d.%d.\n",
           inet_ntoa( cur->ip ),
           ast_tvdiff_us( pkttime, cur->sent_time ),
-          pkttime.tv_sec,
-          pkttime.tv_usec,
-          ( &cur->sent_time )->tv_sec,
-          ( &cur->sent_time )->tv_usec
+          (unsigned int)pkttime.tv_sec,
+          (unsigned int)pkttime.tv_usec,
+          (unsigned int)( &cur->sent_time )->tv_sec,
+          (unsigned int)( &cur->sent_time )->tv_usec
           );
 
   cur->last_time   = ast_tvdiff_us( pkttime, cur->sent_time );
@@ -651,7 +646,7 @@ transmit_arp_req_prim ( struct arp_record * cur )
   
   /* drop in the destination link layer and destination IP address */
   
-
+  return 0;
 }
 
 /*
@@ -727,10 +722,10 @@ transmit_arp_req_lnet ( libnet_t * lnet, struct arp_record * cur )
   cur->expire_time = ast_tvadd( cur->sent_time, o.waittv );
   DEBUG( "IP: %s, sent_time: %d.%d, expire_time: %d.%d.\n",
          inet_ntoa( cur->ip ),
-         ( &cur->sent_time )->tv_sec,
-         ( &cur->sent_time )->tv_usec,
-         ( &cur->expire_time )->tv_sec,
-         ( &cur->expire_time )->tv_usec
+         ( unsigned int )( &cur->sent_time )->tv_sec,
+         ( unsigned int )( &cur->sent_time )->tv_usec,
+         ( unsigned int )( &cur->expire_time )->tv_sec,
+         ( unsigned int )( &cur->expire_time )->tv_usec
        );
 
   cur->numsent++;
@@ -738,6 +733,7 @@ transmit_arp_req_lnet ( libnet_t * lnet, struct arp_record * cur )
   DEBUG( "function %s: cur (%p), cur->sent_time (%p).\n",
          __func__, cur, &cur->sent_time );
 
+  return 0;
 }
 
 /*
@@ -752,7 +748,7 @@ transmit_arp_req ( libnet_t * lnet, struct arp_record * cur )
 
   DEBUG( "About to build ARP request.\n" );
 
-  transmit_arp_req_lnet( lnet, cur );
+  return ( transmit_arp_req_lnet( lnet, cur ) );
   // transmit_arp_req_prim( cur );
 }
 
@@ -829,7 +825,7 @@ ln_ether_ntoa(const u_int8_t *a, char * macf, char * buf, size_t s )
  *
  */
 
-u_int8_t *
+void
 ln_etheraddr_fetch(u_int8_t * t, libnet_t *libnet )
 {
 
@@ -1044,7 +1040,7 @@ static void
 print_info_line(FILE * f, struct arp_record * cur )
 {
     MSG( f,
-        "%-15s %17s %6u %6u %12d %8d\n",
+        "%-15s %17s %6lu %6lu %12d %8ld\n",
            inet_ntoa( cur->ip ),
            ln_ether_ntoa( cur->lladdr, o.macf, cur->llstr, sizeof( cur->llstr ) ), 
            cur->numrecv,
@@ -1064,7 +1060,7 @@ report( struct arp_record * cur )
 
   /* print out the header */
 
-  if ( ! o.flags & AO_NO_HEADER )
+  if ( ! ( o.flags & AO_NO_HEADER ) )
   {
     MSG( o.outp,
            "%-15s %17s %6s %6s %12s %8s\n",
@@ -1083,17 +1079,17 @@ report( struct arp_record * cur )
   {
     next = cur->next;
 
-    if ( o.flags & AO_ALIVE && cur->numrecv > 0 )
+    if ( o.flags & AO_ALIVE && cur->numrecv > 0 ) /* print responding hosts */
     {
       print_info_line( o.outp, cur );
     }
 
-    if ( o.flags & AO_MISSING && cur->numrecv == 0  )
+    if ( o.flags & AO_MISSING && cur->numrecv == 0  ) /* print missing hosts */
     {
       print_info_line( o.outp, cur );
     }
 
-    if ( o.flags & AO_WEIRD && cur->flags )
+    if ( o.flags & AO_WEIRD && cur->flags ) /* print unusual entries */
     {
       print_info_line( o.outp, cur );
     }
@@ -1132,6 +1128,7 @@ main (int argc, char *argv[] )
     {"missing",         no_argument,       0, 'M'        },
     {"weird",           no_argument,       0, 'W'        },
     {"wait",            required_argument, 0, 'w'        },
+    {"first-reply",     no_argument,       0, 'F'        },
     {"broadcast-only",  no_argument,       0, 'B'        },
     {"no-unicast",      no_argument,       0, 'B'        },
     {0, 0, 0, 0},
@@ -1150,7 +1147,7 @@ main (int argc, char *argv[] )
      some validation */
   opterr = 0; /* Keep getopt quiet. */
 
-  while ( -1 != (c = getopt_long(argc, argv, "qvhVBNAMWm:w:i:c:p:f:", long_opts, NULL) ) )
+  while ( -1 != (c = getopt_long(argc, argv, "qvhVBNAMWFm:w:i:c:p:f:", long_opts, NULL) ) )
   {
     static bool opt_done = false;
     switch(c)
@@ -1173,6 +1170,7 @@ main (int argc, char *argv[] )
       case 'h'        : o.flags       |= AO_USAGE;           break ;
       case 'V'        : o.flags       |= AO_VERSION;         break ;
       case 'B'        : o.flags       |= AO_NO_UNICAST;      break ;
+      case 'F'        : o.flags       |= AO_FIRST_REPLY;     break ;
 
       default         : opt_done = true ; --optind;          break ;
 
@@ -1187,7 +1185,7 @@ main (int argc, char *argv[] )
   arpsweep_info_header();
 
   INFO( "Parameters, count: %d, pending: %d, wait: %d, o.waittv(u): %d, flags: %d\n",
-         o.count, o.infl, o.wait, (&o.waittv)->tv_usec, o.flags );
+         o.count, o.infl, o.wait, (unsigned int)(&o.waittv)->tv_usec, o.flags );
 
   /*
    * Now that we've delayed initializing the libraries as long as possible,

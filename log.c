@@ -81,6 +81,7 @@ long_usage(int ret)
     "  -c, --count=NUM         ARP requests to send to each host (%d)\n"
     "  -p, --pending=NUM       max parallel ARP requests in flight (%d)\n"
     "  -w, --wait=MSEC         milliseconds to wait for ARP reply (%d)\n"
+    "  -F, --first-reply       stop sending to a target after any reply\n"
     "  -B, --broadcast-only    send only broadcast frames\n"
     "      --no-unicast        synonym for --broadcast-only\n"
     "\nReporting options:\n"

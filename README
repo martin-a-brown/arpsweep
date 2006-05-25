@@ -20,7 +20,7 @@ Q: Why do I need this utility?
 A: If you are asking this question, you probably don't.
 
 Q: How do I install the program?
-A: Like most other software, for details see INSTALL.
+A: Like most other software (./configure && make), for details see INSTALL.
 
 Q: What's an example of how to run the program?
 A: arpsweep -i eth0 10.10.20.2 10.10.20.1 10.10.20.7
@@ -29,3 +29,25 @@ Q: How else can I run it?
 A: See the manpage.  (If arpsweep is not yet installed, you should be
    able to view the manpage by running this command: "man ./arpsweep.8".)
 
+Q: How fast is arpsweep?
+A: Fairly fast, although it wasn't designed to be speedy.  On a low-end
+   workstation-class machine, compare the following stats with a varying
+   inflight packet count (--pending) and the resulting duration of scan
+   (according to "time").  Each run used the default count (--count) of
+   packets, 3.
+
+     address range (count)    inflight  arpsweep run time
+     -----------------------  --------  -------------------------
+     class C, /24 (256 ** 1)      100      2.08 seconds 
+     class C, /24 (256 ** 1)     1000      0.77 seconds 
+
+     class B, /16 (256 ** 2)     1000     49.5  seconds 
+     class B, /16 (256 ** 2)    10000      5.5  seconds
+
+     class A,  /8 (256 ** 3)    10000   2052.   seconds (~35 min)
+     class A,  /8 (256 ** 3)   100000   2086.   seconds (~35 min)
+
+   Performance is surprisingly good, although memory consumption is fairly
+   high (~900M resident) when scanning an entire class A network.  If you
+   really need to send a pile of ARP in a heck of a hurry, use Bobrowski's
+   arpscan.

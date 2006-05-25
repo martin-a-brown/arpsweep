@@ -59,7 +59,6 @@ typedef unsigned char _Bool;
 char * ln_ether_ntoa(const u_int8_t *a, char * macf,  char * buf, size_t s );
 static void short_usage(int ret);
 static void long_usage(int ret);
-static void usage(int ret);
 struct arp_record * fetch_arp_record();
 
 struct a_options {

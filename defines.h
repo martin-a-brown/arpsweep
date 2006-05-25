@@ -40,8 +40,9 @@
 #define AO_ALIVE                       ( 1 << 2 )
 #define AO_MISSING                     ( 1 << 3 )
 #define AO_WEIRD                       ( 1 << 4 )
-#define AO_NO_HEADER                   ( 1 << 5 )
-#define AO_NO_UNICAST                  ( 1 << 6 )
+#define AO_FIRST_REPLY                 ( 1 << 5 )
+#define AO_NO_HEADER                   ( 1 << 6 )
+#define AO_NO_UNICAST                  ( 1 << 7 )
 
 /* Flags used in arp_records current->flags */
 
