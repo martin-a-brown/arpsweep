@@ -129,7 +129,7 @@ struct timeval ast_set_tvzero( void )
 {
 	struct timeval t;
 	t.tv_sec = 0;
-        t.tv_usec == 0;
+        t.tv_usec = 0;
 	return t;
 }
 

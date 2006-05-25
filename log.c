@@ -67,13 +67,6 @@ print_version(int ret)
 }
 
 void
-usage(int ret)
-{
-  short_usage( ret );
-  exit( ret );
-}
-
-void
 long_usage(int ret)
 {
   short_usage( ret );
@@ -125,8 +118,6 @@ add_loglevel(int level_change )
 int
 loglevel(char * v_option )
 {
-  char * c;
-
   /* User just supplied another -v or --verbose */
 
   if ( v_option == NULL ) return ( add_loglevel( 0 ) );
@@ -152,8 +143,10 @@ loglevel(char * v_option )
 
 }
 
+void
 arpsweep_info_header()
 {
   INFO("Output produced by version: arpsweep-%.2f.\n", arpsweep_version );
   DEBUG("Output produced by version: arpsweep-%.2f.\n", arpsweep_version );
+  return;
 }

@@ -83,7 +83,8 @@ struct a_options    o                           = {
                     .ptr_macf                   = NULL,
                     .format                     = DEFAULT_OUTPUT_FORMAT,
                     .wait                       = DEFAULT_PATIENCE,
-                    .waittv                     = 0,
+                    .waittv.sec                 = 0,
+                    .waittv.usec                = 0,
                     .verbose                    = LOG_LEVEL_ERR,
                     .flags                      = 0,
                     .outp                       = NULL
@@ -161,20 +162,19 @@ einval:
  * from arping by Thomas Habets
  */
 
-static bool get_mac_addr(const char *in,
-                        u_int8_t *n0,
-                        u_int8_t *n1,
-                        u_int8_t *n2,
-                        u_int8_t *n3,
-                        u_int8_t *n4,
-                        u_int8_t *n5)
+static bool get_mac_addr(const char *in, u_int8_t *n)
 {
-         if ( 6 == sscanf(in, "%x:%x:%x:%x:%x:%x", n0, n1, n2, n3, n4, n5 ) )
+         if ( 6 == sscanf(in, "%x:%x:%x:%x:%x:%x", ( unsigned int ) n++,
+                                                   ( unsigned int ) n++,
+                                                   ( unsigned int ) n++,
+                                                   ( unsigned int ) n++,
+                                                   ( unsigned int ) n++,
+                                                   ( unsigned int ) n++ ) )
   { return true;
-  } else if ( 6 == sscanf(in, "%2x%x.%2x%x.%2x%x", n0, n1, n2, n3, n4, n5 ) )
-  { return true;
-  } else if ( 6 == sscanf(in, "%x-%x-%x-%x-%x-%x", n0, n1, n2, n3, n4, n5 ) )
-  { return true;
+//} else if ( 6 == sscanf(in, "%2x%x.%2x%x.%2x%x", n0, n1, n2, n3, n4, n5 ) )
+//{ return true;
+//} else if ( 6 == sscanf(in, "%x-%x-%x-%x-%x-%x", n0, n1, n2, n3, n4, n5 ) )
+//{ return true;
   }
   return false;
 }
@@ -357,7 +357,7 @@ parse_target( char * ip, char * mac )
     memset( &new->lladdr, 0xff, ETHER_ADDR_LEN );
   } else {
     u_int8_t n[6];
-    if ( ! get_mac_addr( mac, &n[0],&n[1],&n[2],&n[3],&n[4],&n[5]) )
+    if ( ! get_mac_addr( mac, &n ) )
     {
       ok = false;
       ERR( "Unrecognized MAC address %s, skipping IP %s.\n", mac, ip );

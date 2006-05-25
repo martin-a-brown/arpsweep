@@ -57,7 +57,6 @@ typedef unsigned char _Bool;
 /* function prototypes */
 
 char * ln_ether_ntoa(const u_int8_t *a, char * macf,  char * buf, size_t s );
-static void prog_abort(char * t );
 static void short_usage(int ret);
 static void long_usage(int ret);
 static void usage(int ret);
