@@ -1,4 +1,14 @@
 
+2006-05-25 0.47   Martin A. Brown <martin@linux-ip.net>
+
+  * added -F (--first-only) command line switch
+  * huge performance speedup, fixing list_length function (Jon Nelson)
+  * improved synopsis section of manpage
+  * began conversion to UN*X primitives instead of libnet
+  * tons of (-Wall)-induced code cleanups
+  * fixed broken header-printing and suppression
+  * internal release
+
 2006-05-17 0.46   Martin A. Brown <martin@linux-ip.net>
 
   * implemented -M, -A and -W command line switches for output

@@ -34,9 +34,8 @@ static const char rcsid[] =
 
 #define _GNU_SOURCE
 #include "arpsweep.h"
-#include "log.c"
-#include "list.c"
-#include "util.c"
+#include "list.h"
+#include "log.h"
 
 const float          arpsweep_version           = 0.46f;
 const char           progname[]                 = PROGRAM_NAME;
@@ -227,8 +226,9 @@ remove_from_inflight( struct arp_record * cur )
 {
   list_remove( &inflight, cur );
 
-  if ( o.count && cur->numsent >= o.count || o.flags & AO_FIRST_REPLY )
+  if ( ( o.count && cur->numsent >= o.count ) || o.flags & AO_FIRST_REPLY )
   {
+     DEBUG( "Done with %s.\n", inet_ntoa( cur->ip ) );
      list_append( &complete, cur );
   } else {
      list_append( &targets,  cur );
@@ -283,13 +283,15 @@ expire_inflight( struct arp_record * cur )
 
                break;
 
-      case -1: DEBUG("Not expiring inflight %s at %d.%d (sent_time %d.%d).\n",
+      case -1: /* do not need to expire anything from here "south", return */
+               DEBUG("Found %s inflight at %d.%d (sent_time %d.%d); return control to caller.\n",
                      inet_ntoa( cur->ip ),
                      (unsigned int)( &cur->sent_time )->tv_sec,
                      (unsigned int)( &cur->sent_time )->tv_usec,
                      (unsigned int)now.tv_sec,
                      (unsigned int)now.tv_usec
                     );
+               return;
                break;
 
     }
@@ -317,7 +319,7 @@ parse_target( char * ip, char * mac )
 
   INFO("Mac in %s: %s\n", __func__, mac );
 
-  if ( ! inet_aton( ip, &tg_ip ) )
+  if ( ! inet_pton( AF_INET, ip, &tg_ip ) )
   {
     ok = false;
     ERR( "Unrecognized IP address %s, skipping.\n", ip );
@@ -397,7 +399,7 @@ file_input_target( FILE * f )
 
     i = sscanf( buf, "%s %s", s0, s1 );
 
-    DEBUG( "%s reading line %d: s0=%s, s0=%s.\n", __func__, line, s0, s1 );
+    DEBUG( "%s reading line %d: s0=%s, s1=%s.\n", __func__, line, s0, s1 );
 
     switch (i)
     {
@@ -611,7 +613,8 @@ caught_arp_reply(const char            *unused,
           (unsigned int)( &cur->sent_time )->tv_usec
           );
 
-  cur->last_time   = ast_tvdiff_us( pkttime, cur->sent_time );
+  //cur->last_time   = ast_tvdiff_us( pkttime, cur->sent_time );
+  cur->last_time   = ast_tvdiff_us( h->ts, cur->sent_time );
   cur->delay      += cur->last_time;
   cur->numrecv    += 1      ; /* I could use cur->numrecv++ */
 

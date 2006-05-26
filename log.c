@@ -36,18 +36,18 @@ extern struct            a_options o;
 #include "defines.h"
 #endif
 
-#define MSG(    D, F, ...) fprintf( D, F , ##__VA_ARGS__ )
-#define LOGGER( L, F, ...) if ( o.verbose & L ) MSG( stderr, F , ##__VA_ARGS__ )
-
-#define ERR(   F, ...) LOGGER( LOG_LEVEL_ERR   , F , ##__VA_ARGS__)
-#define WARN(  F, ...) LOGGER( LOG_LEVEL_WARN  , F , ##__VA_ARGS__)
-#define INFO(  F, ...) LOGGER( LOG_LEVEL_INFO  , F , ##__VA_ARGS__)
-#define DEBUG( F, ...) LOGGER( LOG_LEVEL_DEBUG , F , ##__VA_ARGS__)
-
-#define FATAL( F, ...) { MSG( stderr, F, ##__VA_ARGS__ ); exit( EXIT_FAILURE ); }
-// #define FATAL( F, ...) { MSG( stderr, "File: %s; Line: %d; Function: %s\n", __FILE__, __LINE__, __func__ ); MSG( stderr, F, ##__VA_ARGS__ ); exit( EXIT_FAILURE ); }
-
-#define USAGE_FATAL( F, ... ) { short_usage( EXIT_FAILURE ); FATAL( F, ##__VA_ARGS__ ); }
+// #define MSG(    D, F, ...) fprintf( D, F , ##__VA_ARGS__ )
+// #define LOGGER( L, F, ...) if ( o.verbose & L ) MSG( stderr, F , ##__VA_ARGS__ )
+// 
+// #define ERR(   F, ...) LOGGER( LOG_LEVEL_ERR   , F , ##__VA_ARGS__)
+// #define WARN(  F, ...) LOGGER( LOG_LEVEL_WARN  , F , ##__VA_ARGS__)
+// #define INFO(  F, ...) LOGGER( LOG_LEVEL_INFO  , F , ##__VA_ARGS__)
+// #define DEBUG( F, ...) LOGGER( LOG_LEVEL_DEBUG , F , ##__VA_ARGS__)
+// 
+// #define FATAL( F, ...) { MSG( stderr, F, ##__VA_ARGS__ ); exit( EXIT_FAILURE ); }
+// // #define FATAL( F, ...) { MSG( stderr, "File: %s; Line: %d; Function: %s\n", __FILE__, __LINE__, __func__ ); MSG( stderr, F, ##__VA_ARGS__ ); exit( EXIT_FAILURE ); }
+// 
+// #define USAGE_FATAL( F, ... ) { short_usage( EXIT_FAILURE ); FATAL( F, ##__VA_ARGS__ ); }
 
 
 void

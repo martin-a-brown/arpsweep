@@ -8,6 +8,7 @@
 /* the usual includes for most apps and networking stuff */
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <getopt.h>
 #include <strings.h>
 #include <sys/time.h>
@@ -24,20 +25,21 @@
 #include <pcap.h>
 
 #include "defines.h"
+#include "list.h"
 #include "timevalmath.h"
 
 /* Yes, this boolean stuff was taken from GPL'd shuffle, by M.J. Pomraning. */
 
-#if HAVE_STDBOOL_H
-# include <stdbool.h>  /* truth */
-#else
-typedef bool _Bool;
-typedef unsigned char _Bool;
-# define bool _Bool
-# define false 0
-# define true 1
-# define __bool_true_false_are_defined 1
-#endif /* HAVE_STDBOOL_H */
+// #if HAVE_STDBOOL_H
+// # include <stdbool.h>  /* truth */
+// #else
+// typedef bool _Bool;
+// typedef unsigned char _Bool;
+// # define bool _Bool
+// # define false 0
+// # define true 1
+// # define __bool_true_false_are_defined 1
+// #endif /* HAVE_STDBOOL_H */
 
 /*
  * MAX and MIN taken from coretuils, a GNU project
@@ -57,8 +59,6 @@ typedef unsigned char _Bool;
 /* function prototypes */
 
 char * ln_ether_ntoa(const u_int8_t *a, char * macf,  char * buf, size_t s );
-static void short_usage(int ret);
-static void long_usage(int ret);
 struct arp_record * fetch_arp_record();
 
 struct a_options {
@@ -92,14 +92,9 @@ struct arppkt {
   u_int8_t[4]                   tip;*/
 };
 
-/*
-struct arp_record_head {
-  struct arp_record           *next;
-  struct arp_record           *prev;
-  int                        length;
-};
-*/
+//extern struct arp_record;
 
+/* 
 struct arp_record {
   struct arp_record           *next;
   struct arp_record           *prev;
@@ -111,10 +106,12 @@ struct arp_record {
   int                         delay;
   struct timeval          sent_time;
   struct timeval        expire_time;
-  struct in_addr                 ip;  /* ip.s_addr is network byte order */
+  struct in_addr                 ip;
   u_int32_t                  ipaddr;
   u_int8_t   lladdr[ETHER_ADDR_LEN];
   char        llstr[LL_ADDR_STRLEN];
 };
+
+*/
 
 #endif                                                         /* _ARPSWEEP_H */
