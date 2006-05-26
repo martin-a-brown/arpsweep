@@ -1134,6 +1134,8 @@ main (int argc, char *argv[] )
     {"first-reply",     no_argument,       0, 'F'        },
     {"broadcast-only",  no_argument,       0, 'B'        },
     {"no-unicast",      no_argument,       0, 'B'        },
+    {"randomize-mac",   no_argument,       0, 'R'        },
+    {"randomize-ip",    no_argument,       0, 'P'        },
     {0, 0, 0, 0},
   };
 
@@ -1174,6 +1176,8 @@ main (int argc, char *argv[] )
       case 'V'        : o.flags       |= AO_VERSION;         break ;
       case 'B'        : o.flags       |= AO_NO_UNICAST;      break ;
       case 'F'        : o.flags       |= AO_FIRST_REPLY;     break ;
+      case 'R'        : o.flags       |= AO_RANDOMIZE_MAC;   break ;
+      case 'P'        : o.flags       |= AO_RANDOMIZE_IP;    break ;
 
       default         : opt_done = true ; --optind;          break ;
 

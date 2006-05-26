@@ -5,7 +5,7 @@
 
 2006-05-25 0.47   Martin A. Brown <martin@linux-ip.net>
 
-  * added -F (--first-only) command line switch
+  * added -F (--first-only) command line switch (Dale Carder)
   * huge performance speedup, fixing list_length function (Jon Nelson)
   * improved synopsis section of manpage
   * began conversion to UN*X primitives instead of libnet
@@ -15,8 +15,7 @@
 
 2006-05-17 0.46   Martin A. Brown <martin@linux-ip.net>
 
-  * implemented -M, -A and -W command line switches for output
-    reporting
+  * implemented -M, -A and -W command line switches to control output
   * internal release
 
 2006-05-01 0.45   Martin A. Brown <martin@linux-ip.net>

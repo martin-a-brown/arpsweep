@@ -5,9 +5,8 @@ featuritis
 ==========
   - adaptive RTT (a la "ping -A")
   - implement the ignored format specification
-  - stop after first reply (-F --first-reply)
   - allow specification of source IP address (--source? --bind? -B -s)
-  - allow specification of request or reply (gratuitous ARP, scary!)
+  - allow specification of request or reply (--answer?)
 
 
 portability

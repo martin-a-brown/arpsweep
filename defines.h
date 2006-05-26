@@ -43,6 +43,8 @@
 #define AO_FIRST_REPLY                 ( 1 << 5 )
 #define AO_NO_HEADER                   ( 1 << 6 )
 #define AO_NO_UNICAST                  ( 1 << 7 )
+#define AO_RANDOMIZE_MAC               ( 1 << 8 )
+#define AO_RANDOMIZE_IP                ( 1 << 9 )
 
 /* Flags used in arp_records current->flags */
 

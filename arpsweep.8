@@ -15,6 +15,7 @@ arpsweep
   [ \fB\-M\fR           | \fB\-\-missing\fR                     ]
   [ \fB\-W\fR           | \fB\-\-weird\fR                       ]
   [ \fB\-N\fR           | \fB\-\-no-header\fR                   ]
+  [ \fB\-F\fR           | \fB\-\-first-reply\fR                 ]
   [ \fB\-i\fR \fIINTERFACE\fR | \fB\-\-interface=\fR\fIINTERFACE\fR         ]
   [ \fB\-c\fR \fINUM\fR       | \fB\-\-count=\fR\fINUM\fR                   ]
   [ \fB\-p\fR \fINUM\fR       | \fB\-\-pending=\fR\fINUM\fR                 ]
@@ -72,7 +73,7 @@ Send a total of
 .I NUM
 ARP requests to each target host.  Specify zero (0) to continue until
 bored.
-.\" -r, --requests=NUM
+.\" -p, --pending=NUM
 .\"
 .TP
 \fB\-p\fR, \fB\-\-pending\fR=\fINUM\fR
@@ -92,6 +93,12 @@ need to increase this value to allow for the longer round trip.  Note, also,
 that if you set this value very low, a second ARP could be transmitted before
 the remote host has time to respond to the first one.  This could conceivably
 produce skewed statistics with negative round trip times.
+.\" -F, --first-reply
+.\"
+.TP
+\fB\-F\fR, \fB\-\-first\-reply\fR
+Stop sending ARP requests after any reply (the first reply) is received from a
+target IP.
 .\" -m, --mac-format=STR
 .\"
 .TP
