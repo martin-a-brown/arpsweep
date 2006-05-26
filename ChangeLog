@@ -1,4 +1,8 @@
 
+2006-05-26 0.48   Martin A. Brown <martin@linux-ip.net>
+
+  * reworked entire build system with suggestions from Jon Nelson
+
 2006-05-25 0.47   Martin A. Brown <martin@linux-ip.net>
 
   * added -F (--first-only) command line switch
