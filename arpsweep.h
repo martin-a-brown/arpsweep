@@ -65,13 +65,15 @@ struct a_options {
   char                      *ifname;
   int                         count;  /* count pointer count (yuk-yuk) */
   char                   *ptr_count;
-  int                          infl;
+  int                          infl;  /* how many packets inflight */
   char                    *ptr_infl;
-  int                          wait;
+  int                          wait;  /* how long to wait for a reply */
   char                    *ptr_wait;
-  char                        *macf;
+  int                          gran;  /* max time to wait between samples */
+  char                    *ptr_gran;
+  char                        *macf;  /* output format for MAC addresses */
   char                    *ptr_macf;
-  FILE                        *outp;
+  FILE                        *outp;  /* output file descriptor */
   char                    *ptr_outp;
   struct timeval             waittv;
   char                      *format;
