@@ -48,6 +48,16 @@ static char          macformat_unix[]       = "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x";
 static char          macformat_3com[]       = "%.2x-%.2x-%.2x-%.2x-%.2x-%.2x";
 static char          macformat_cisco[]      = "%.2x%.2x.%.2x%.2x.%.2x%.2x";
 
+static struct timeval zero_tv               = {
+                    .tv_sec                 = 0,
+                    .tv_usec                = 0
+};
+
+static struct timeval max_select_tv         = {
+                    .tv_sec                 = 0,
+                    .tv_usec                = SLEEP_TIME 
+};
+
 struct arp_record    our_addresses[1];
 struct arp_record   *my                         = our_addresses;
 
@@ -222,13 +232,25 @@ allocate_arp_record( )
 }
 
 void
-remove_from_inflight( struct arp_record * cur )
+received_inflight( struct arp_record * cur )
 {
   list_remove( &inflight, cur );
 
   if ( ( o.count && cur->numsent >= o.count ) || o.flags & AO_FIRST_REPLY )
   {
-     DEBUG( "Done with %s.\n", inet_ntoa( cur->ip ) );
+    list_append( &complete, cur );
+  } else {
+    list_append( &targets, cur );
+  }
+}
+
+void
+unreceived_inflight( struct arp_record * cur )
+{
+  list_remove( &inflight, cur );
+
+  if ( o.count && cur->numsent >= o.count )
+  {
      list_append( &complete, cur );
   } else {
      list_append( &targets,  cur );
@@ -242,7 +264,41 @@ remove_from_inflight( struct arp_record * cur )
 //         return inet_ntoa(n);
 // }
 
-void
+struct timeval
+get_select_timeout( struct timeval min,
+                    struct timeval expected,
+                    struct timeval max )
+{
+
+  /* pretend that time doesn't march on during function execution */
+
+  struct timeval now;
+
+  now = ast_tvnow();
+
+  if ( list_length( inflight ) < o.infl && targets )
+  {
+
+    return( min );
+
+  } else {
+    
+    if ( ast_tvcmp( expected, now ) < 0 )
+    {
+
+      return( min );
+
+    } else {
+
+      expected = ast_tvsub( expected, now );
+
+      return( expected );
+
+    }
+  }
+}
+
+struct timeval
 expire_inflight( struct arp_record * cur )
 {
   struct arp_record   *next;
@@ -272,30 +328,36 @@ expire_inflight( struct arp_record * cur )
     switch ( d )
     {
       case  0: /* fall through, weird, exact time? */
-      case  1: WARN( "No response from %s for ARP number %ld at %d.%d, expiring.\n",
+      case  1: WARN( "No response from %s for ARP number %ld (sent %d.%d), expiring.\n",
                      inet_ntoa( cur->ip ),
                      cur->numsent,
-                     (unsigned int)now.tv_sec,
-                     (unsigned int)now.tv_usec
+                     (unsigned int)( &cur->sent_time )->tv_sec,
+                     (unsigned int)( &cur->sent_time )->tv_usec
                     );
 
-               remove_from_inflight( cur );
+               unreceived_inflight( cur );
 
                break;
 
       case -1: /* do not need to expire anything from here "south", return */
                DEBUG("Found %s inflight at %d.%d (sent_time %d.%d); return control to caller.\n",
                      inet_ntoa( cur->ip ),
-                     (unsigned int)( &cur->sent_time )->tv_sec,
-                     (unsigned int)( &cur->sent_time )->tv_usec,
                      (unsigned int)now.tv_sec,
-                     (unsigned int)now.tv_usec
+                     (unsigned int)now.tv_usec,
+                     (unsigned int)( &cur->sent_time )->tv_sec,
+                     (unsigned int)( &cur->sent_time )->tv_usec
                     );
-               return;
+               return cur->expire_time;
                break;
 
     }
   }
+
+  /*
+   * We expired everything that was inflight, just return any timeval.
+   * 
+   */
+  return now;
 }
 
 /*
@@ -340,7 +402,6 @@ parse_target( char * ip, char * mac )
   */
   
   new = allocate_arp_record();
-  new->ipaddr = tg_ip.s_addr;
   new->ip.s_addr = tg_ip.s_addr;
   new->last_time = 0;
   new->delay = 0;
@@ -351,7 +412,7 @@ parse_target( char * ip, char * mac )
 
   if ( ! mac ) /* switch between a provided MAC and broadcast */
   {
-    DEBUG( "No MAC specified, setting broadcast address.\n" );
+    //DEBUG( "No MAC specified, setting broadcast address.\n" );
 
     memset( &new->lladdr, 0xff, ETHER_ADDR_LEN );
   } else {
@@ -565,7 +626,7 @@ caught_arp_reply(const char            *unused,
 
   }
 
-  remove_from_inflight( cur );
+  received_inflight( cur );
 
   /*
    * If cr->lladdr currently contains the link layer broadcast address
@@ -613,8 +674,8 @@ caught_arp_reply(const char            *unused,
           (unsigned int)( &cur->sent_time )->tv_usec
           );
 
-  //cur->last_time   = ast_tvdiff_us( pkttime, cur->sent_time );
-  cur->last_time   = ast_tvdiff_us( h->ts, cur->sent_time );
+  cur->last_time   = ast_tvdiff_us( pkttime, cur->sent_time );
+  //cur->last_time   = ast_tvdiff_us( h->ts, cur->sent_time );
   cur->delay      += cur->last_time;
   cur->numrecv    += 1      ; /* I could use cur->numrecv++ */
 
@@ -649,6 +710,8 @@ transmit_arp_req_prim ( struct arp_record * cur )
   
   /* drop in the destination link layer and destination IP address */
   
+  
+  
   return 0;
 }
 
@@ -675,7 +738,7 @@ transmit_arp_req_lnet ( libnet_t * lnet, struct arp_record * cur )
                                     my->lladdr,
                                     (u_int8_t *) &my->ipaddr,
                                     ethnull,
-                                    (u_int8_t *) &cur->ipaddr,
+                                    (u_int8_t *) &cur->ip.s_addr,
                                     NULL,
                                     0,
                                     lnet,
@@ -889,7 +952,6 @@ validate_user_options()
       "Invalid integer \"%s\" specified for count option (-c|--count)\n",
        o.ptr_count );
 
-
   if ( ( o.ptr_infl  && ! str2int( o.ptr_infl, &o.infl ) ) || o.infl <= 0 )
     USAGE_FATAL(
       "Invalid specification for request count \"%s\" (-p|--pending).\n",
@@ -900,12 +962,18 @@ validate_user_options()
       "Invalid wait interval \"%s\" specified (-w|--wait).\n",
        o.ptr_wait );
 
-  /* easier to do the math if calculating only in microseconds */
+  /* 
+   * It's much easier to do the time math if calculating only in
+   * microseconds.  We ask the user to specify "wait" in milliseconds
+   * so, we need to convert into microseconds before calculating.
+   *
+   */
+
   o.wait            *= ONE_THOUSAND;
   o.waittv.tv_sec    = ( o.wait / ONE_MILLION );
   o.waittv.tv_usec   = ( o.wait % ONE_MILLION );
   o.wait            /= ONE_THOUSAND;
-
+  
   if ( o.ptr_macf )
   {
     bool ok = false; /* assume user has supplied a bad mac-format arg */
@@ -1112,36 +1180,44 @@ main (int argc, char *argv[] )
 
   enum
   {
-     PREFER_FRAME_ADDR = CHAR_MAX + 1
+     PRFR_FRAME = CHAR_MAX + 1,
+     RANDOMIZE_MAC,
+     RANDOMIZE_IP,
   };
 
   static struct option long_opts[] = {
-    {"help",            no_argument,       0, 'h'        },
-    {"usage",           no_argument,       0, 'h'        },
-    {"verbose",         optional_argument, 0, 'v'        },
-    {"quiet",           no_argument,       0, 'q'        },
-    {"version",         no_argument,       0, 'V'        },
-    {"interface",       required_argument, 0, 'i'        },
-    {"count",           required_argument, 0, 'c'        },
-    {"pending",         required_argument, 0, 'p'        },
-    {"mac-format",      required_argument, 0, 'm'        },
-    {"format",          required_argument, 0, 'f'        },
-    {"no-header",       no_argument,       0, 'N'        },
-    {"alive",           no_argument,       0, 'A'        },
-    {"missing",         no_argument,       0, 'M'        },
-    {"weird",           no_argument,       0, 'W'        },
-    {"wait",            required_argument, 0, 'w'        },
-    {"first-reply",     no_argument,       0, 'F'        },
-    {"broadcast-only",  no_argument,       0, 'B'        },
-    {"no-unicast",      no_argument,       0, 'B'        },
-    {"randomize-mac",   no_argument,       0, 'R'        },
-    {"randomize-ip",    no_argument,       0, 'P'        },
+    {"help",            no_argument,       0, 'h'            },
+    {"usage",           no_argument,       0, 'h'            },
+    {"verbose",         optional_argument, 0, 'v'            },
+    {"quiet",           no_argument,       0, 'q'            },
+    {"version",         no_argument,       0, 'V'            },
+    {"interface",       required_argument, 0, 'i'            },
+    {"count",           required_argument, 0, 'c'            },
+    {"pending",         required_argument, 0, 'p'            },
+    {"mac-format",      required_argument, 0, 'm'            },
+    {"format",          required_argument, 0, 'f'            },
+    {"wait",            required_argument, 0, 'w'            },
+    {"aggressive",      no_argument,       0, 'g'            },
+    {"no-header",       no_argument,       0, 'N'            },
+    {"alive",           no_argument,       0, 'A'            },
+    {"missing",         no_argument,       0, 'M'            },
+    {"weird",           no_argument,       0, 'W'            },
+    {"first-reply",     no_argument,       0, 'F'            },
+    {"broadcast-only",  no_argument,       0, 'B'            },
+    {"no-unicast",      no_argument,       0, 'B'            },
+    {"randomize-mac",   no_argument,       0, RANDOMIZE_MAC  },
+    {"randomize-ip",    no_argument,       0, RANDOMIZE_IP   },
     {0, 0, 0, 0},
   };
 
   int                  c, i;
 
   struct timeval       timeout;
+  struct timeval       next_expire        = {
+                      .tv_sec             = 0,
+                      .tv_usec            = 0
+                                            };
+
   static libnet_t     *l                  = NULL;
   static pcap_t       *p                  = NULL;
 
@@ -1152,34 +1228,36 @@ main (int argc, char *argv[] )
      some validation */
   opterr = 0; /* Keep getopt quiet. */
 
-  while ( -1 != (c = getopt_long(argc, argv, "qvhVBNAMWFm:w:i:c:p:f:", long_opts, NULL) ) )
+  while ( -1 != (c = getopt_long(argc, argv, "qvhVBNAMWFgm:w:i:c:p:f:", 
+                                                           long_opts, NULL) ) )
   {
     static bool opt_done = false;
     switch(c)
     {
-      case '?'        : USAGE_FATAL( "Unrecognized option:  \"%s\"\n"
-                               "Try \"%s --help\" for more information.\n",
-                               argv[optind - 1], progname ); break ;
-      case 'q'        : o.verbose      = 0;                  break ;
-      case 'v'        : o.verbose      = loglevel( optarg ); break ;
-      case 'i'        : o.ifname       = optarg;             break ;
-      case 'c'        : o.ptr_count    = optarg;             break ;
-      case 'p'        : o.ptr_infl     = optarg;             break ;
-      case 'w'        : o.ptr_wait     = optarg;             break ;
-      case 'm'        : o.ptr_macf     = optarg;             break ;
-      case 'f'        : o.format       = optarg;             break ;
-      case 'N'        : o.flags       |= AO_NO_HEADER;       break ;
-      case 'A'        : o.flags       |= AO_ALIVE;           break ;
-      case 'M'        : o.flags       |= AO_MISSING;         break ;
-      case 'W'        : o.flags       |= AO_WEIRD;           break ;
-      case 'h'        : o.flags       |= AO_USAGE;           break ;
-      case 'V'        : o.flags       |= AO_VERSION;         break ;
-      case 'B'        : o.flags       |= AO_NO_UNICAST;      break ;
-      case 'F'        : o.flags       |= AO_FIRST_REPLY;     break ;
-      case 'R'        : o.flags       |= AO_RANDOMIZE_MAC;   break ;
-      case 'P'        : o.flags       |= AO_RANDOMIZE_IP;    break ;
+      case '?'           : USAGE_FATAL( "Unrecognized option:  \"%s\"\n"
+                                  "Try \"%s --help\" for more information.\n",
+                                  argv[optind - 1], progname ); break ;
+      case 'q'           : o.verbose      = 0;                  break ;
+      case 'v'           : o.verbose      = loglevel( optarg ); break ;
+      case 'i'           : o.ifname       = optarg;             break ;
+      case 'c'           : o.ptr_count    = optarg;             break ;
+      case 'p'           : o.ptr_infl     = optarg;             break ;
+      case 'w'           : o.ptr_wait     = optarg;             break ;
+      case 'm'           : o.ptr_macf     = optarg;             break ;
+      case 'f'           : o.format       = optarg;             break ;
+      case 'N'           : o.flags       |= AO_NO_HEADER;       break ;
+      case 'A'           : o.flags       |= AO_ALIVE;           break ;
+      case 'M'           : o.flags       |= AO_MISSING;         break ;
+      case 'W'           : o.flags       |= AO_WEIRD;           break ;
+      case 'h'           : o.flags       |= AO_USAGE;           break ;
+      case 'V'           : o.flags       |= AO_VERSION;         break ;
+      case 'B'           : o.flags       |= AO_NO_UNICAST;      break ;
+      case 'F'           : o.flags       |= AO_FIRST_REPLY;     break ;
+      case 'g'           : o.flags       |= AO_AGGRESSIVE;      break ;
+      case RANDOMIZE_MAC : o.flags       |= AO_RANDOMIZE_MAC;   break ;
+      case RANDOMIZE_IP  : o.flags       |= AO_RANDOMIZE_IP;    break ;
 
-      default         : opt_done = true ; --optind;          break ;
+      default            : opt_done = true ; --optind;          break ;
 
     }
     if (opt_done) break;
@@ -1239,21 +1317,22 @@ main (int argc, char *argv[] )
      *
      */
 
-    while ( targets )
+    timeout.tv_sec  = ( DEFAULT_GRANULARITY / ONE_MILLION );
+    timeout.tv_usec = ( DEFAULT_GRANULARITY % ONE_MILLION );
+    timeout = ast_tvadd( ast_tvnow(), timeout );
+
+    while ( targets && list_length( inflight ) < o.infl )
     {
       current = targets;
-
-      INFO( "About to resume main transmit loop (current=%p).\n", current );
-      DEBUG( "targets: %d items, inflight: %d items, complete: %d items, o.infl = %d.\n",
-            list_length( targets  ),
-            list_length( inflight ),
-            list_length( complete ),
-            o.infl );
 
       if ( list_length( inflight ) >= o.infl ) break ;
 
       INFO( "Going to send another ARP (current=%p).\n", current );
       transmit_arp_req( l, current );
+
+      if ( o.flags & AO_AGGRESSIVE ) continue ; /* transmit fast as possible */
+
+      if ( ast_tvcmp( ast_tvnow(), timeout ) >= 0 ) break ;
 
     }
     /*
@@ -1266,13 +1345,32 @@ main (int argc, char *argv[] )
 
     /* need better timeout calculation */
 
+    // timeout.tv_sec = 0; timeout.tv_usec = o.gran;
+    // timeout.tv_sec = 0; timeout.tv_usec = 0;
+    // timeout.tv_sec = 0; timeout.tv_usec = SLEEP_TIME;
+  /* 
+    timeout = get_select_timeout( zero_tv, next_expire, max_select_tv );
+    DEBUG("Received timeout value of = %d.%d.\n",
+                     (unsigned int)timeout.tv_sec,
+                     (unsigned int)timeout.tv_usec);
+  */
+
     timeout.tv_sec = 0; timeout.tv_usec = SLEEP_TIME;
+
     select_on_pcap( p, &timeout );
 
-    DEBUG("Checking to see if we need to expire inflight stragglers.\n");
+    if ( ast_tvcmp( ast_tvnow(), next_expire ) >= 0 )
+    {
 
-    expire_inflight( inflight );
+      DEBUG("Checking to see if we need to expire inflight stragglers.\n");
 
+      next_expire = expire_inflight( inflight );
+
+      DEBUG("Received next_expire = %d.%d.\n",
+                       (unsigned int)next_expire.tv_sec,
+                       (unsigned int)next_expire.tv_usec);
+
+    }
   }
 
   report( complete ) ;

@@ -30,21 +30,24 @@
 //#else
 //#define BPF_ONLY_ARP_REPLIES                 "arp"
 //#endif
-#define SLEEP_TIME                         10
+#define SLEEP_TIME                          1
+//#define SLEEP_TIME                         50
 #define DEFAULT_PATIENCE                  250  /* a quarter of a second */
+#define DEFAULT_GRANULARITY               100  /* 50 nanoseconds */
 
 /* Flags used in o.flags to describe command line options */
 
-#define AO_USAGE                       ( 1 << 0 )
-#define AO_VERSION                     ( 1 << 1 )
-#define AO_ALIVE                       ( 1 << 2 )
-#define AO_MISSING                     ( 1 << 3 )
-#define AO_WEIRD                       ( 1 << 4 )
-#define AO_FIRST_REPLY                 ( 1 << 5 )
-#define AO_NO_HEADER                   ( 1 << 6 )
-#define AO_NO_UNICAST                  ( 1 << 7 )
-#define AO_RANDOMIZE_MAC               ( 1 << 8 )
-#define AO_RANDOMIZE_IP                ( 1 << 9 )
+#define AO_USAGE                       ( 1 <<  0 )
+#define AO_VERSION                     ( 1 <<  1 )
+#define AO_ALIVE                       ( 1 <<  2 )
+#define AO_MISSING                     ( 1 <<  3 )
+#define AO_WEIRD                       ( 1 <<  4 )
+#define AO_FIRST_REPLY                 ( 1 <<  5 )
+#define AO_AGGRESSIVE                  ( 1 <<  6 )
+#define AO_NO_HEADER                   ( 1 <<  7 )
+#define AO_NO_UNICAST                  ( 1 <<  8 )
+#define AO_RANDOMIZE_MAC               ( 1 <<  9 )
+#define AO_RANDOMIZE_IP                ( 1 << 10 )
 
 /* Flags used in arp_records current->flags */
 

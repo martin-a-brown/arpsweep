@@ -5,6 +5,14 @@ targets in a single command-line invocation.  It can also be used as an ARP
 network scanner.
 
 
+Quick tips:
+===========
+
+REQUIRED:  libnet-1.1.X and libpcap
+INSTALL:  ./configure && make
+USE: arpsweep -i eth1 192.168.0.1 192.168.0.2 192.168.0.3
+
+
 arpsweep Q&A
 ============
 
@@ -23,18 +31,19 @@ Q: How do I install the program?
 A: Like most other software (./configure && make), for details see INSTALL.
 
 Q: What's an example of how to run the program?
-A: arpsweep -i eth0 10.10.20.2 10.10.20.1 10.10.20.7
+A: arpsweep -i eth0 192.168.0.1 192.168.0.2 192.168.0.3
 
 Q: How else can I run it?
 A: See the manpage.  (If arpsweep is not yet installed, you should be
    able to view the manpage by running this command: "man ./arpsweep.8".)
 
 Q: How fast is arpsweep?
-A: Fairly fast, although it wasn't designed to be speedy.  On a low-end
-   workstation-class machine, compare the following stats with a varying
-   inflight packet count (--pending) and the resulting duration of scan
-   (according to "time").  Each run used the default count (--count) of
-   packets, 3.
+A: Fairly fast in --aggressive mode, although it wasn't designed to be
+   speedy.  On a low-end workstation-class machine, compare the
+   following stats with a varying inflight packet count (--pending) and
+   the resulting duration of scan (according to "time").  Each run used
+   the default count (--count) of packets, 3.  (Stats taken with
+   arpsweep-0.46.)
 
      address range (count)    inflight  arpsweep run time
      -----------------------  --------  -------------------------
@@ -48,6 +57,15 @@ A: Fairly fast, although it wasn't designed to be speedy.  On a low-end
      class A,  /8 (256 ** 3)   100000   2086.   seconds (~35 min)
 
    Performance is surprisingly good, although memory consumption is fairly
-   high (~900M resident) when scanning an entire class A network.  If you
-   really need to send a pile of ARP in a heck of a hurry, use Bobrowski's
-   arpscan.
+   high (~900M resident) when scanning an entire class A network.
+
+Q: When I run arpsweep in aggressive mode, some hosts don't reply!
+   (Really, you could at least have phrased that as a question.)
+A: Not all IP stacks are equally robust.  I have encountered stacks on 
+   embedded devices which can't handle the flood of broadcast ARP requests
+   and either refuse to reply or are unable to reply.  Although
+   aggressive mode can allow you to scan networks fairly quickly, you
+   are trading the speed of the scan against the granularity of recorded
+   round trip time and the possibility that some hosts may not respond.
+
+
