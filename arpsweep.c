@@ -37,7 +37,7 @@ static const char rcsid[] =
 #include "list.h"
 #include "log.h"
 
-const float          arpsweep_version           = 0.46f;
+const float          arpsweep_version           = 0.49f;
 const char           progname[]                 = PROGRAM_NAME;
 const char           arpsweep_time[]            = __DATE__" "__TIME__;
 const char           arpsweep_copyright[] 
@@ -915,7 +915,6 @@ get_local_addresses( libnet_t * l )
   my->ip.s_addr = libnet_get_ipaddr4( l );
 
   ln_etheraddr_fetch( my->lladdr, l );
-  ln_ether_ntoa( my->lladdr, macformat_unix, my->llstr, sizeof( my->llstr ) );
 
 }
 
@@ -1019,6 +1018,8 @@ initialize_pcap(pcap_t * pcap, char * ifname, struct arp_record * cur)
   char                         bp_text[50];
   struct bpf_program           bp;
 
+  char                         buf0[128];
+
   /* 
    * We only need to snag 60 bytes to get an entire ARP response
    * so, we'll use ARP_FRAME_SIZE
@@ -1039,19 +1040,12 @@ initialize_pcap(pcap_t * pcap, char * ifname, struct arp_record * cur)
     FATAL( "Sniffing arp on something other than Ethernet, eh?  Nice try.\n" );
   }
 
-  /*
-  snprintf( bp_text,
-            sizeof( bp_text ),
-            "%s",
-            BPF_ONLY_ARP_REPLIES );
-
-   */
-  
   snprintf( bp_text,
             sizeof( bp_text ),
             "%s %s",
             BPF_ONLY_ARP_REPLIES,
-            cur->llstr );
+            ln_ether_ntoa( cur->lladdr, macformat_unix, buf0, sizeof( buf0 ))
+          );
  
 
   DEBUG( "BPF: \"%s\" (in %s).\n", bp_text, __func__ );
@@ -1110,10 +1104,11 @@ initialize_libnet( libnet_t * lnet, char * ifname )
 static void
 print_info_line(FILE * f, struct arp_record * cur )
 {
+    char                     buf0[128];
     MSG( f,
         "%-15s %17s %6lu %6lu %12d %8ld\n",
            inet_ntoa( cur->ip ),
-           ln_ether_ntoa( cur->lladdr, o.macf, cur->llstr, sizeof( cur->llstr ) ), 
+           ln_ether_ntoa( cur->lladdr, o.macf, buf0, sizeof( buf0 ) ), 
            cur->numrecv,
            cur->numsent,
            cur->delay,

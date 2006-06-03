@@ -31,20 +31,20 @@
 #include "defines.h"
 
 struct arp_record {
-  struct arp_record           *next;
-  struct arp_record           *prev;
-  unsigned long        member_count;
-  int                         flags;
-  long                      numsent;
-  long                      numrecv;
-  int                     last_time;
-  int                         delay;
-  struct timeval          sent_time;
-  struct timeval        expire_time;
-  struct in_addr                 ip;  /* ip.s_addr is network byte order */
-  u_int32_t                  ipaddr;
-  u_int8_t   lladdr[ETHER_ADDR_LEN];
-  char        llstr[LL_ADDR_STRLEN];
+  struct arp_record               *next;
+  struct arp_record               *prev;
+  unsigned long            member_count;
+  int                             flags;
+  long                          numsent;
+  long                          numrecv;
+  int                         last_time;
+  int                             delay;
+  struct timeval              sent_time;
+  struct timeval            expire_time;
+  struct in_addr                     ip; /* ip.s_addr is network byte order */
+  u_int32_t                      ipaddr;
+  u_int8_t       lladdr[ETHER_ADDR_LEN];
+  u_int8_t   src_lladdr[ETHER_ADDR_LEN];
 };
 
 
