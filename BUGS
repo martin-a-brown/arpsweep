@@ -4,4 +4,7 @@ arpsweep BUGS
 See also TODO.
 
   - Occasionally, "Floating point exception", when SIGINT sent.
+  - Cisco formatted MAC supplied like this: 0080.c8fb.78-d8 appears
+    to be scanned correctly (according to sscanf), but the address
+    stored in memory is not correct.  I'd prefer to have sscanf fail.
 

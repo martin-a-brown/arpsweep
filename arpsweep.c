@@ -44,6 +44,10 @@ const char           arpsweep_copyright[]
                       = "arpsweep by Martin A. Brown, see http://linux-ip.net/";
 
 
+static char          scanmac_unix[]         = "%2x:%2x:%2x:%2x:%2x:%2x";
+static char          scanmac_3com[]         = "%2x-%2x-%2x-%2x-%2x-%2x";
+static char          scanmac_cisco[]        = "%2x%2x.%2x%2x.%2x%2x";
+
 static char          macformat_unix[]       = "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x";
 static char          macformat_3com[]       = "%.2x-%.2x-%.2x-%.2x-%.2x-%.2x";
 static char          macformat_cisco[]      = "%.2x%.2x.%.2x%.2x.%.2x%.2x";
@@ -167,21 +171,17 @@ einval:
 /*
  * get_mac_addr()  adapted (or, more accurately, adopted)
  * from arping by Thomas Habets
+ *
  */
 
 static bool get_mac_addr(const char *in, u_int8_t *n)
 {
-         if ( 6 == sscanf(in, "%x:%x:%x:%x:%x:%x", ( unsigned int * ) n+0,
-                                                   ( unsigned int * ) n+1,
-                                                   ( unsigned int * ) n+2,
-                                                   ( unsigned int * ) n+4,
-                                                   ( unsigned int * ) n+4,
-                                                   ( unsigned int * ) n+5 ) )
+         if ( 6 == sscanf( in, scanmac_unix,  n+0, n+1, n+2, n+3, n+4, n+5 ) )
   { return true;
-//} else if ( 6 == sscanf(in, "%2x%x.%2x%x.%2x%x", n0, n1, n2, n3, n4, n5 ) )
-//{ return true;
-//} else if ( 6 == sscanf(in, "%x-%x-%x-%x-%x-%x", n0, n1, n2, n3, n4, n5 ) )
-//{ return true;
+  } else if ( 6 == sscanf( in, scanmac_3com,  n+0, n+1, n+2, n+3, n+4, n+5 ) )
+  { return true;
+  } else if ( 6 == sscanf( in, scanmac_cisco, n+0, n+1, n+2, n+3, n+4, n+5 ) )
+  { return true;
   }
   return false;
 }
