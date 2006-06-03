@@ -52,6 +52,7 @@ static char          macformat_unix[]       = "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x";
 static char          macformat_3com[]       = "%.2x-%.2x-%.2x-%.2x-%.2x-%.2x";
 static char          macformat_cisco[]      = "%.2x%.2x.%.2x%.2x.%.2x%.2x";
 
+/*
 static struct timeval zero_tv               = {
                     .tv_sec                 = 0,
                     .tv_usec                = 0
@@ -61,6 +62,7 @@ static struct timeval max_select_tv         = {
                     .tv_sec                 = 0,
                     .tv_usec                = SLEEP_TIME 
 };
+*/
 
 struct arp_record    our_addresses[1];
 struct arp_record   *my                         = our_addresses;
@@ -863,6 +865,26 @@ select_on_pcap( pcap_t * pcap, struct timeval * timeout )
 /*
  * spit out a user-edible string of the ethernet address
  *
+ * ARGS:  
+ * RTRN:  char * containing string version of ethernet address
+ *        suitable for printing for human consumption
+ * S-FX:  modifies buf
+ *
+ * Note:  This is pretty much a carbon copy of glibc's ether_ntoa,
+ *        providing different output formats.
+ *
+ */
+char *
+arpsweep_ether_ntoa(const struct ether_addr *ea, char * macf, char * buf )
+{
+  
+  snprintf ( buf, sizeof( buf ), macf, ea );
+  return buf;
+}
+
+/*
+ * spit out a user-edible string of the ethernet address
+ *
  * ARGS:  yes
  * RTRN:  char * containing string version of ethernet address
  *        suitable for printing for human consumption
@@ -1163,16 +1185,12 @@ report( struct arp_record * cur )
   }
 }
 
-/*
- * main()
- *
- */
-int
-main (int argc, char *argv[] )
+
+static void
+option_handling( int argc, char *argv[] )
 {
 
-  /* We shall start with command line options! */
-
+  int                  c;
   enum
   {
      PRFR_FRAME = CHAR_MAX + 1,
@@ -1204,20 +1222,6 @@ main (int argc, char *argv[] )
     {"randomize-ip",    no_argument,       0, RANDOMIZE_IP   },
     {0, 0, 0, 0},
   };
-
-  int                  c, i;
-
-  struct timeval       timeout;
-  struct timeval       next_expire        = {
-                      .tv_sec             = 0,
-                      .tv_usec            = 0
-                                            };
-
-  static libnet_t     *l                  = NULL;
-  static pcap_t       *p                  = NULL;
-
-  memset( ethnull, 0x00, ETHER_ADDR_LEN);
-  memset( ethbcast, 0xff, ETHER_ADDR_LEN);
 
   /* just parse a pile of options, first, then we'll perform
      some validation */
@@ -1261,6 +1265,36 @@ main (int argc, char *argv[] )
   o.outp = stdout; /* until the --output command line switch is added */
 
   validate_user_options();
+
+}
+
+/*
+ * main()
+ *
+ */
+int
+main ( int argc, char *argv[] )
+{
+
+  int                  i;
+
+  struct timeval       timeout;
+  struct timeval       next_expire        = {
+                      .tv_sec             = 0,
+                      .tv_usec            = 0
+                                            };
+
+  static libnet_t     *l                  = NULL;
+  static pcap_t       *p                  = NULL;
+
+  pthread_t            tx_thread;
+  pthread_attr_t       tx_thread_attr;
+
+
+  memset( ethnull,  0x00, ETHER_ADDR_LEN);
+  memset( ethbcast, 0xff, ETHER_ADDR_LEN);
+
+  option_handling( argc, argv );
 
   arpsweep_info_header();
 

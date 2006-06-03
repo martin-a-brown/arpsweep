@@ -20,6 +20,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <pthread.h>
+
 /* all of the fancy packet-handling libraries for our needs */
 #include <libnet.h>
 #include <pcap.h>
