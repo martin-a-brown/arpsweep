@@ -705,7 +705,7 @@ transmit_arp_req_prim ( struct arp_record * cur )
 
   memcpy( p, my->lladdr, ETHER_ADDR_LEN );
   p      += ETHER_ADDR_LEN;
-  *( u_int32_t * )p = htonl( my->ipaddr );
+  *( u_int32_t * )p = htonl( my->ip.s_addr );
   p      += IPADDR_LEN;
   
   /* drop in the destination link layer and destination IP address */
@@ -736,7 +736,7 @@ transmit_arp_req_lnet ( libnet_t * lnet, struct arp_record * cur )
                                     IPADDR_LEN,
                                     ARPOP_REQUEST,
                                     my->lladdr,
-                                    (u_int8_t *) &my->ipaddr,
+                                    (u_int8_t *) &my->ip.s_addr,
                                     ethnull,
                                     (u_int8_t *) &cur->ip.s_addr,
                                     NULL,
@@ -912,7 +912,7 @@ get_local_addresses( libnet_t * l )
 
   /* Yeah.  Ugly.  These are globals.  Oh well. */
 
-  my->ipaddr = libnet_get_ipaddr4( l );
+  my->ip.s_addr = libnet_get_ipaddr4( l );
 
   ln_etheraddr_fetch( my->lladdr, l );
   ln_ether_ntoa( my->lladdr, macformat_unix, my->llstr, sizeof( my->llstr ) );
